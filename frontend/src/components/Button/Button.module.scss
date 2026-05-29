@@ -1,0 +1,47 @@
+@use '../../styles/variables' as *;
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: $font-size-md;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.primary {
+  color: $color-surface;
+  background: $color-primary;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, $color-primary 88%, $color-text);
+  }
+}
+
+.secondary {
+  color: $color-text;
+  background: transparent;
+  border-color: rgba($color-text, 0.18);
+
+  &:hover:not(:disabled) {
+    border-color: rgba($color-text, 0.35);
+  }
+}

@@ -176,3 +176,123 @@ instead of being resolved to a path. The result: a fresh in-memory DB per run, n
   thing to show given the interview context.
 - *Jest* — heavier setup, slower, and its transform pipeline adds friction with native ESM and the
   native `better-sqlite3` addon. Vitest delivers the same DX without that overhead.
+
+---
+
+## D11 — Frontend styling: SCSS modules + a single 3-color / 3-size token module
+
+**Decision.** Every component owns a co-located `Component.module.scss`; JSX files hold logic and
+composition only (no inline `style`, no global class strings). All design values come from one base
+module, `frontend/src/styles/_variables.scss`, which defines **exactly three colors**
+(`$color-surface`, `$color-text`, `$color-primary`) and **three font sizes**
+(`$font-size-sm/md/lg`). Each module starts with `@use '.../styles/variables' as *` and references
+those tokens; borders, dividers, and hover states are derived with `rgba($color-text, …)` rather
+than introducing more colors.
+
+**Why.** It enforces the CLAUDE.md separation (JSX = behavior, SCSS = presentation) and gives a
+single source of truth: editing one token recolors or rescales the entire app at build time. SCSS
+`$` variables (over CSS custom properties) were chosen for strictness — an undefined token is a
+compile error, and values are inlined so there's no runtime indirection. CSS-module scoping also
+removes the class-name collision risk that the global demo CSS had.
+
+**Tradeoffs.**
+- Build-time tokens mean no runtime theming (e.g. a JS-driven dark-mode toggle). Out of scope here;
+  the swap to CSS custom properties is mechanical if that's ever needed.
+- Adds the `sass` dev dependency. Vite compiles `.module.scss` with no further config.
+
+---
+
+## D12 — Palette: white surface, near-black text, one emerald accent
+
+**Decision.** The three colors are `#ffffff` (surface), `#111111` (text), and `#047857` (emerald
+accent). The accent is reserved for the primary action, focus ring, and links.
+
+**Why.** A minimalist, modern, elegant look was the explicit brief. A near-black-on-white base with a
+single restrained accent reads as deliberate rather than decorated. The emerald `#047857` was picked
+specifically so white text on the accent clears the WCAG AA contrast threshold (≈5.3:1) — important
+because the primary button is white-on-accent.
+
+**Tradeoffs.** One accent leaves no dedicated semantic colors (success/danger). At this scope, error
+states use the neutral text token with an accent rule rather than a red, keeping to the three-color
+budget; richer states would justify expanding the palette. Swapping the accent (e.g. to a blue) is a
+one-line edit in `_variables.scss`.
+
+---
+
+## D13 — React Router for view transitions
+
+**Decision.** Use `react-router-dom` with `/login`, `/register`, and a protected `/`. Two route
+gates, `PublicOnlyRoute` and `ProtectedRoute`, read auth status from `useAuth()` and redirect
+accordingly; the build plan's "toggle between login/register" is a `<Link>` between the two public
+routes.
+
+**Why.** It gives real URLs (shareable, bookmarkable, back-button-aware) and a single declarative
+place where access control lives, instead of imperative conditional rendering scattered in `App`.
+A successful login/register simply flips auth status; the gate then redirects — no navigation code in
+the form, which keeps a clean seam for Phase 6.
+
+**Tradeoffs.** One dependency beyond plain conditional rendering. Justified by the guard/redirect
+clarity and the room it leaves for Phase 6 sub-views.
+
+---
+
+## D14 — Auto-login after registration
+
+**Decision.** `POST /register` returns `{id, username}` but no token, so the client's `register`
+action chains directly into `login`, landing the user in the app on success.
+
+**Why.** Matches the build plan's "Register → login → land on the task view" and avoids a pointless
+"now please log in" detour right after the user just typed their credentials.
+
+**Tradeoffs.** One extra request (the follow-up `/login`). Negligible, and it keeps token issuance in
+exactly one place (`login`) rather than duplicating it on the register path.
+
+---
+
+## D15 — API base URL via `VITE_API_URL` with a localhost default
+
+**Decision.** The HTTP client reads `import.meta.env.VITE_API_URL` and defaults to
+`http://localhost:3000`. A committed `frontend/.env.example` documents the variable; an actual `.env`
+is gitignored.
+
+**Why.** The app runs with zero configuration locally (the default is the dev backend), while a
+single env var repoints it for any other environment — no code edit, and no Vite dev-proxy needed
+since CORS is already open (D4). All requests funnel through one `request()` helper (see D16), so the
+base URL is defined in exactly one spot.
+
+**Tradeoffs.** A build-time env var (baked at compile) rather than a hardcoded constant or a runtime
+config fetch. For a static frontend this is the standard, lowest-friction choice.
+
+---
+
+## D16 — Axios over `fetch` for the HTTP client
+
+**Decision.** The frontend's HTTP layer is built on **Axios** rather than the browser's `fetch`, and
+is split by responsibility under `src/api/`: `httpClient.js` owns the configured `axios.create`
+instance (base URL, and the home for future interceptors), `request.js` exposes one
+`request(url, { method, data, token })` wrapper plus error normalization, and `tokenStore.js` owns
+session-token persistence. The per-domain modules (`authApi`) are thin objects of named methods
+(`authApi.login`, `authApi.getMe`) that call `request`, and every method returns the response body
+directly.
+
+**Why.** Axios removes the boilerplate `fetch` repeats on every call: it serializes/parses JSON
+automatically (no manual `JSON.stringify` or `res.json()`), and — the decisive point — it **rejects
+on non-2xx status**, so the wrapper has one error path instead of separately checking `res.ok`. That
+lets all failures normalize through a single `toApiError` step that maps the backend's flat
+`{ error }` body (and network failures) into a typed `ApiError(message, status)` the UI catches. A
+shared `axios.create({ baseURL })` instance also fixes the base URL (D15) in one place. The API
+surface stays identical to the components — they still `try/catch` an `ApiError`.
+
+**Why methods return the body, not the response.** Callers asked for data, not transport metadata.
+`authApi.login()` resolves to `{ token }` and `authApi.getMe()` to `{ id, username }`, so call sites
+read naturally (`const session = await authApi.login(...)`) with no response-unwrapping or
+rename-destructuring noise. This keeps the seam between the API layer and React components clean.
+
+**Tradeoffs.**
+- Adds a runtime dependency (~13 KB gzipped) where `fetch` is built in. Justified by the removed
+  per-call boilerplate and the single, consistent error path; the cost is trivial for this app.
+- Axios interceptors could attach the token globally, but the token is passed explicitly per request
+  instead — the HTTP layer stays decoupled from React/auth state, and the rehydrate and login flows
+  (which need a token *before* it is persisted) don't depend on hidden global state.
+
+**Postgres/stack note.** Frontend-only choice; no backend or migration impact.

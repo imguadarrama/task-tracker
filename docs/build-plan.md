@@ -231,9 +231,9 @@ In the Vite React app:
   app.use(express.json());
   ```
 
-- [ ] Register → login → land on the task view
-- [ ] Token is sent on authenticated requests
-- [ ] A failed login shows an error message
+- [x] Register → login → land on the task view
+- [x] Token is sent on authenticated requests
+- [x] A failed login shows an error message
 
 **Understand:** `app.use(cors())` is fine for a local demo but wide open; in production you'd restrict it to your frontend's origin. Noted in `DECISIONS.md` D4.
 
