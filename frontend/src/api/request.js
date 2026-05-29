@@ -1,16 +1,5 @@
-import axios from 'axios';
+import { httpClient } from './httpClient.js';
 import { ApiError } from './ApiError.js';
-
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
-const TOKEN_KEY = 'taskTracker.token';
-
-const httpClient = axios.create({ baseURL });
-
-export const tokenStore = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
-};
 
 export async function request(url, { method = 'get', data, token } = {}) {
   try {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./AuthContext.js";
-import { tokenStore } from "../api/client.js";
+import { tokenStore } from "../api/tokenStore.js";
 import { authApi } from "../api/authApi.js";
 
 export function AuthProvider({ children }) {

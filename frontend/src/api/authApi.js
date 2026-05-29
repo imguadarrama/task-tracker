@@ -1,4 +1,4 @@
-import { request } from './client.js';
+import { request } from './request.js';
 
 export const authApi = {
   register: (username, password) =>

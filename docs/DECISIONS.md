@@ -267,10 +267,13 @@ config fetch. For a static frontend this is the standard, lowest-friction choice
 
 ## D16 — Axios over `fetch` for the HTTP client
 
-**Decision.** The frontend's single HTTP wrapper (`src/api/client.js`) is built on **Axios** rather
-than the browser's `fetch`. It exposes one `request(url, { method, data, token })` function; the
-per-domain modules (`authApi`) are thin objects of named methods (`authApi.login`, `authApi.getMe`)
-that call it, and every method returns the response body directly.
+**Decision.** The frontend's HTTP layer is built on **Axios** rather than the browser's `fetch`, and
+is split by responsibility under `src/api/`: `httpClient.js` owns the configured `axios.create`
+instance (base URL, and the home for future interceptors), `request.js` exposes one
+`request(url, { method, data, token })` wrapper plus error normalization, and `tokenStore.js` owns
+session-token persistence. The per-domain modules (`authApi`) are thin objects of named methods
+(`authApi.login`, `authApi.getMe`) that call `request`, and every method returns the response body
+directly.
 
 **Why.** Axios removes the boilerplate `fetch` repeats on every call: it serializes/parses JSON
 automatically (no manual `JSON.stringify` or `res.json()`), and — the decisive point — it **rejects
@@ -289,7 +292,7 @@ rename-destructuring noise. This keeps the seam between the API layer and React 
 - Adds a runtime dependency (~13 KB gzipped) where `fetch` is built in. Justified by the removed
   per-call boilerplate and the single, consistent error path; the cost is trivial for this app.
 - Axios interceptors could attach the token globally, but the token is passed explicitly per request
-  instead — `client.js` stays decoupled from React/auth state, and the rehydrate and login flows
+  instead — the HTTP layer stays decoupled from React/auth state, and the rehydrate and login flows
   (which need a token *before* it is persisted) don't depend on hidden global state.
 
 **Postgres/stack note.** Frontend-only choice; no backend or migration impact.
