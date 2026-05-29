@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import authRoutes from "./routes/auth.js";
+import taskRoutes from "./routes/tasks.js";
 
 const app = express();
 
@@ -9,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/", authRoutes);
+app.use("/tasks", taskRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });

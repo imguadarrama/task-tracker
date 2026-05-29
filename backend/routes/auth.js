@@ -3,15 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { isNonEmptyString } from "../validators.js";
 
 const router = Router();
 
 const BCRYPT_COST = 10;
 const TOKEN_TTL = "12h";
-
-function isNonEmptyString(value) {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 router.post("/register", async (req, res) => {
   const { username, password } = req.body ?? {};

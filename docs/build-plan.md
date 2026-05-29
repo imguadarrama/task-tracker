@@ -183,10 +183,10 @@ All task routes use the `auth` middleware. Use **parameterized queries** (`?` pl
 
 Status codes to use deliberately: `201` create, `200` read/update, `204` delete, `400` bad input, `401` not logged in, `403` not your task, `404` not found. Send structured errors: `res.status(404).json({ error: "Task not found" })`.
 
-- [ ] Create/list/update/delete all work (test via Postman/curl)
-- [ ] A second user **cannot** see or modify the first user's tasks
-- [ ] `?status=doing` and `?search=keyword` filter correctly (DB does the filtering)
-- [ ] Status codes + JSON error bodies match the spec
+- [x] Create/list/update/delete all work (tested via Postman)
+- [x] A second user **cannot** see or modify the first user's tasks
+- [x] `?status=doing` and `?search=keyword` filter correctly (DB does the filtering)
+- [x] Status codes + JSON error bodies match the spec
 
 **Understand:** the ownership check is **server-side and non-negotiable**. Hiding edit buttons in React is not security — anyone can hit the API directly. The 403 path is what actually protects user data, and it's the most-scrutinized requirement in the spec. Spend your time here.
 
