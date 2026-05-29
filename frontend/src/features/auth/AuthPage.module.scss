@@ -1,0 +1,38 @@
+@use '../../styles/variables' as *;
+
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.page > * {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.title {
+  margin: 0 0 1.5rem;
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.switch {
+  margin: 1.25rem 0 0;
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.7);
+  text-align: center;
+
+  a {
+    color: $color-primary;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

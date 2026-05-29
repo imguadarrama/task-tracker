@@ -1,0 +1,28 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba($color-text, 0.1);
+}
+
+.greeting {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: 600;
+}
+
+.note {
+  margin: 2rem 0 0;
+  font-size: $font-size-md;
+  color: rgba($color-text, 0.6);
+}
