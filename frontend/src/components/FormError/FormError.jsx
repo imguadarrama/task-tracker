@@ -1,4 +1,4 @@
-import styles from './FormError.module.scss';
+import styles from "./FormError.module.scss";
 
 export default function FormError({ message }) {
   if (!message) return null;
