@@ -1,0 +1,3 @@
+-- Schema for the task tracker (SQLite).
+-- Applied automatically by db.js on backend startup.
+-- Tables are created in Phase 1.
