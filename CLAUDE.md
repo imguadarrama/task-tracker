@@ -32,6 +32,8 @@ These make Code rules 1, 3, and 6 concrete for the `frontend/` app.
 
 5. **Layering.** `components/` = generic, presentation-only · `features/` = domain composition · `api/` = the single HTTP client wrapper (Axios) plus per-domain method objects, each returning the response body (components never call the client directly) · `context/` = shared state · `hooks/` = reusable behavior.
 
+6. **No speculative props.** A component takes only the props a real caller passes today. No polymorphic `Tag`/`as`/`component` props, no options whose defaults no caller overrides. Hardcode the element; introduce a prop only when a second real use case forces the seam — not before. Less is better.
+
 ## Workflow
 
 All changes ship via pull requests — never direct pushes to `master`.
