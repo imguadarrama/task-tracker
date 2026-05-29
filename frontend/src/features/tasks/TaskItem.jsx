@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from '../../components/Button/Button.jsx';
 import FormError from '../../components/FormError/FormError.jsx';
+import Modal from '../../components/Modal/Modal.jsx';
 import TaskForm from './TaskForm.jsx';
 import { STATUS_LABELS } from './statuses.js';
 import styles from './TaskItem.module.scss';
@@ -26,9 +27,26 @@ export default function TaskItem({ task, onUpdate, onDelete }) {
     }
   }
 
-  if (editing) {
-    return (
+  return (
+    <>
       <li className={styles.item}>
+        <div className={styles.header}>
+          <h3 className={styles.title}>{task.title}</h3>
+          <span className={styles.status}>{STATUS_LABELS[task.status]}</span>
+        </div>
+        {task.description && <p className={styles.description}>{task.description}</p>}
+        <FormError message={error} />
+        <div className={styles.actions}>
+          <Button variant="secondary" onClick={() => setEditing(true)} disabled={deleting}>
+            Edit
+          </Button>
+          <Button variant="secondary" onClick={handleDelete} loading={deleting}>
+            Delete
+          </Button>
+        </div>
+      </li>
+
+      <Modal open={editing} onClose={() => setEditing(false)} title="Edit task">
         <TaskForm
           initialValues={{
             title: task.title,
@@ -39,26 +57,7 @@ export default function TaskItem({ task, onUpdate, onDelete }) {
           onSubmit={handleSave}
           onCancel={() => setEditing(false)}
         />
-      </li>
-    );
-  }
-
-  return (
-    <li className={styles.item}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>{task.title}</h3>
-        <span className={styles.status}>{STATUS_LABELS[task.status]}</span>
-      </div>
-      {task.description && <p className={styles.description}>{task.description}</p>}
-      <FormError message={error} />
-      <div className={styles.actions}>
-        <Button variant="secondary" onClick={() => setEditing(true)} disabled={deleting}>
-          Edit
-        </Button>
-        <Button variant="secondary" onClick={handleDelete} loading={deleting}>
-          Delete
-        </Button>
-      </div>
-    </li>
+      </Modal>
+    </>
   );
 }

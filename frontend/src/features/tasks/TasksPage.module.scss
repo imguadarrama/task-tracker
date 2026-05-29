@@ -30,6 +30,13 @@
   gap: 1rem;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .heading {
   margin: 0;
   font-size: $font-size-md;
