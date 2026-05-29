@@ -52,11 +52,11 @@ npm create vite@latest frontend -- --template react
 cd frontend && npm install && cd ..
 ```
 
-- [ ] Backend `package.json` has `"type": "module"` and scripts: `"dev": "node --watch server.js"`, `"test": "vitest run"`, `"test:watch": "vitest"`
-- [ ] Frontend scaffolded; `npm run dev` opens the Vite page
-- [ ] `backend/.env.example` (committed) and `backend/.env` (gitignored) with `JWT_SECRET=<random hex>`, `PORT=3000`, `DATABASE_FILE=./data/app.db`
-- [ ] Generate a real `JWT_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-- [ ] Create empty (or near-empty) files: `backend/server.js`, `backend/db.js`, `backend/schema.sql`
+- [x] Backend `package.json` has `"type": "module"` and scripts: `"dev": "node --watch server.js"`, `"test": "vitest run"`, `"test:watch": "vitest"`
+- [x] Frontend scaffolded; `npm run dev` opens the Vite page
+- [x] `backend/.env.example` (committed) and `backend/.env` (gitignored) with `JWT_SECRET=<random hex>`, `PORT=3000`, `DATABASE_FILE=./data/app.db`
+- [x] Generate a real `JWT_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- [x] Create empty (or near-empty) files: `backend/server.js`, `backend/db.js`, `backend/schema.sql`
 
 **Understand:** the frontend and backend are two separate processes that only share JSON over HTTP. The SQLite file is opened by the backend process only — the frontend never touches it directly. A JWT is what ties a request back to a user.
 
@@ -119,9 +119,9 @@ if (schema.length > 0) db.exec(schema);
 
 Smoke test from `backend/`: `node -e "import('./db.js').then(m => console.log(m.db.prepare('SELECT 1 AS one').get()))"` prints `{ one: 1 }`.
 
-- [ ] Both tables created (verify by listing `sqlite_master` or running the smoke test above)
-- [ ] `status` CHECK constraint enforces the three allowed values **at the DB level**
-- [ ] `PRAGMA foreign_keys` returns `[{ foreign_keys: 1 }]` — without this, the FK on `tasks.owner_id` is silently ignored
+- [x] Both tables created (verify by listing `sqlite_master` or running the smoke test above)
+- [x] `status` CHECK constraint enforces the three allowed values **at the DB level**
+- [x] `PRAGMA foreign_keys` returns `[{ foreign_keys: 1 }]` — without this, the FK on `tasks.owner_id` is silently ignored
 
 **Understand:** `owner_id` (with the FK) is the linchpin of "users can only touch their own tasks." The DB `CHECK` on `status` is a free safety net — even a buggy endpoint can't insert an invalid status. The `foreign_keys = ON` pragma is non-negotiable in SQLite: without it, `ON DELETE CASCADE` does literally nothing.
 
@@ -267,10 +267,10 @@ Update `README.md` (scaffolded in Phase 0) to cover:
    - Request validation (e.g. zod) + rate limiting, and a fuller test suite (auth failures, 403 paths).
 
 Final smoke test, fresh eyes:
-- [ ] Register → login → create → filter → search → edit → delete, all from the running UI
-- [ ] Log in as a second user → confirm task isolation
-- [ ] `npm test` green
-- [ ] README runs exactly as written (try the commands literally)
+- [x] Register → login → create → filter → search → edit → delete, all from the running UI
+- [x] Log in as a second user → confirm task isolation
+- [x] `npm test` green
+- [x] README runs exactly as written (try the commands literally)
 
 ---
 

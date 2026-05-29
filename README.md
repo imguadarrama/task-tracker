@@ -2,14 +2,14 @@
 
 A minimal task-tracking app: register, log in, create/edit/delete tasks, filter by status, search by keyword. Built as a take-home exercise — focus is correctness and clarity, not UI polish.
 
-**Status:** In progress. This README is updated as the project evolves through its build phases. See `docs/build-plan.md` for the phase-by-phase plan and `docs/DECISIONS.md` for the running log of design choices.
+**Status:** Complete (all 7 phases shipped). See `docs/build-plan.md` for the phase-by-phase plan and `docs/DECISIONS.md` for the running log of design choices.
 
 ---
 
 ## Stack
 
 - **Backend:** Node.js (≥ 20) + Express, raw SQL via `better-sqlite3`, auth via `bcryptjs` + `jsonwebtoken`.
-- **Frontend:** React (Vite), plain `fetch` for API calls, `localStorage` for the JWT.
+- **Frontend:** React (Vite), Axios for API calls (see `docs/DECISIONS.md` D16), `localStorage` for the JWT.
 - **Database:** SQLite — single file, no server to install. See `docs/DECISIONS.md` for why this was chosen over Postgres for the take-home.
 - **Tests:** Vitest + `supertest` (run in-process against the exported Express app). See `docs/DECISIONS.md` D10.
 
@@ -56,13 +56,24 @@ second user can't see or modify another user's task — 403). No `.env` or runni
 ```
 .
 ├── backend/
-│   ├── server.js          # Express app + routes
+│   ├── app.js             # Express app — middleware, routes wired
+│   ├── server.js          # process entry point (app.listen)
+│   ├── routes/
+│   │   ├── auth.js        # POST /register, POST /login, GET /me
+│   │   └── tasks.js       # CRUD task routes (auth-guarded)
+│   ├── validators.js      # shared input validation helpers
 │   ├── db.js              # SQLite connection, applies schema.sql on startup
 │   ├── schema.sql         # users + tasks tables, CHECK constraints, FK
 │   ├── data/              # SQLite DB file lives here (gitignored)
 │   ├── .env.example       # template — copy to .env
 │   └── package.json
-├── frontend/              # Vite + React app
+├── frontend/src/
+│   ├── api/               # Axios client + per-domain method objects
+│   ├── components/        # generic, presentation-only primitives
+│   ├── features/          # domain composition (auth, tasks)
+│   ├── context/           # AuthContext + AuthProvider
+│   ├── hooks/             # reusable hooks (useForm, useTasks)
+│   └── routes/            # ProtectedRoute + PublicOnlyRoute guards
 ├── docs/
 │   ├── DECISIONS.md       # running log of design decisions and tradeoffs
 │   ├── build-plan.md      # phase-by-phase build plan
