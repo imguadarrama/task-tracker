@@ -246,10 +246,10 @@ In the Vite React app:
 - Status dropdown filter + search box → re-fetch with `?status=` / `?search=` (let the backend filter — don't reimplement client-side).
 - **Loading state** while fetching; **error message** when a request fails.
 
-- [ ] List shows only my tasks
-- [ ] Create / edit / delete update the list
-- [ ] Filter + search hit the backend params and work end-to-end
-- [ ] Loading indicator and error text both appear at the right times
+- [x] List shows only my tasks
+- [x] Create / edit / delete update the list
+- [x] Filter + search hit the backend params and work end-to-end
+- [x] Loading indicator and error text both appear at the right times
 
 **Understand:** the spec explicitly lists "loading states and error messages" — they're cheap (`useState` flags) and reviewers check for them. Don't drop them to polish layout.
 

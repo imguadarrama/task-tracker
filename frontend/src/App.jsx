@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import PublicOnlyRoute from './routes/PublicOnlyRoute.jsx';
 import AuthPage from './features/auth/AuthPage.jsx';
-import TasksPlaceholder from './features/tasks/TasksPlaceholder.jsx';
+import TasksPage from './features/tasks/TasksPage.jsx';
 
 export default function App() {
   return (
@@ -12,7 +12,7 @@ export default function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
       </Route>
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<TasksPlaceholder />} />
+        <Route path="/" element={<TasksPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
