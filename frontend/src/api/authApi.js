@@ -1,9 +1,11 @@
-import { api } from './client.js';
+import { request } from './client.js';
 
-export const register = (username, password) =>
-  api('/register', { method: 'POST', body: { username, password } });
+export const authApi = {
+  register: (username, password) =>
+    request('/register', { method: 'post', data: { username, password } }),
 
-export const login = (username, password) =>
-  api('/login', { method: 'POST', body: { username, password } });
+  login: (username, password) =>
+    request('/login', { method: 'post', data: { username, password } }),
 
-export const getMe = (token) => api('/me', { token });
+  getMe: (token) => request('/me', { token }),
+};

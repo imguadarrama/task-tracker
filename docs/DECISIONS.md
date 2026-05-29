@@ -251,14 +251,45 @@ exactly one place (`login`) rather than duplicating it on the register path.
 
 ## D15 — API base URL via `VITE_API_URL` with a localhost default
 
-**Decision.** The fetch client reads `import.meta.env.VITE_API_URL` and defaults to
+**Decision.** The HTTP client reads `import.meta.env.VITE_API_URL` and defaults to
 `http://localhost:3000`. A committed `frontend/.env.example` documents the variable; an actual `.env`
 is gitignored.
 
 **Why.** The app runs with zero configuration locally (the default is the dev backend), while a
 single env var repoints it for any other environment — no code edit, and no Vite dev-proxy needed
-since CORS is already open (D4). All requests funnel through one `api()` helper, so the base URL is
-defined in exactly one spot.
+since CORS is already open (D4). All requests funnel through one `request()` helper (see D16), so the
+base URL is defined in exactly one spot.
 
 **Tradeoffs.** A build-time env var (baked at compile) rather than a hardcoded constant or a runtime
 config fetch. For a static frontend this is the standard, lowest-friction choice.
+
+---
+
+## D16 — Axios over `fetch` for the HTTP client
+
+**Decision.** The frontend's single HTTP wrapper (`src/api/client.js`) is built on **Axios** rather
+than the browser's `fetch`. It exposes one `request(url, { method, data, token })` function; the
+per-domain modules (`authApi`) are thin objects of named methods (`authApi.login`, `authApi.getMe`)
+that call it, and every method returns the response body directly.
+
+**Why.** Axios removes the boilerplate `fetch` repeats on every call: it serializes/parses JSON
+automatically (no manual `JSON.stringify` or `res.json()`), and — the decisive point — it **rejects
+on non-2xx status**, so the wrapper has one error path instead of separately checking `res.ok`. That
+lets all failures normalize through a single `toApiError` step that maps the backend's flat
+`{ error }` body (and network failures) into a typed `ApiError(message, status)` the UI catches. A
+shared `axios.create({ baseURL })` instance also fixes the base URL (D15) in one place. The API
+surface stays identical to the components — they still `try/catch` an `ApiError`.
+
+**Why methods return the body, not the response.** Callers asked for data, not transport metadata.
+`authApi.login()` resolves to `{ token }` and `authApi.getMe()` to `{ id, username }`, so call sites
+read naturally (`const session = await authApi.login(...)`) with no response-unwrapping or
+rename-destructuring noise. This keeps the seam between the API layer and React components clean.
+
+**Tradeoffs.**
+- Adds a runtime dependency (~13 KB gzipped) where `fetch` is built in. Justified by the removed
+  per-call boilerplate and the single, consistent error path; the cost is trivial for this app.
+- Axios interceptors could attach the token globally, but the token is passed explicitly per request
+  instead — `client.js` stays decoupled from React/auth state, and the rehydrate and login flows
+  (which need a token *before* it is persisted) don't depend on hidden global state.
+
+**Postgres/stack note.** Frontend-only choice; no backend or migration impact.

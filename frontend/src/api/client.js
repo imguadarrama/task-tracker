@@ -1,7 +1,10 @@
+import axios from 'axios';
 import { ApiError } from './ApiError.js';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 const TOKEN_KEY = 'taskTracker.token';
+
+const httpClient = axios.create({ baseURL });
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -9,25 +12,26 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
-export async function api(path, { method = 'GET', body, token } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  let res;
+export async function request(url, { method = 'get', data, token } = {}) {
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
+    const response = await httpClient.request({
+      url,
       method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
+      data,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-  } catch {
-    throw new ApiError('Unable to reach the server', 0);
+    return response.data;
+  } catch (error) {
+    throw toApiError(error);
   }
+}
 
-  const data = res.status === 204 ? null : await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new ApiError(data?.error ?? 'Request failed', res.status);
+function toApiError(error) {
+  if (error.response) {
+    return new ApiError(
+      error.response.data?.error ?? 'Request failed',
+      error.response.status,
+    );
   }
-  return data;
+  return new ApiError('Unable to reach the server', 0);
 }

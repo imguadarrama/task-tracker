@@ -30,7 +30,7 @@ These make Code rules 1, 3, and 6 concrete for the `frontend/` app.
 
 4. **Context over prop drilling.** Cross-cutting state (auth: token + user) lives in a Context provider and is read via a `useAuth()` hook. Never thread auth through component props.
 
-5. **Layering.** `components/` = generic, presentation-only · `features/` = domain composition · `api/` = the single `fetch` wrapper plus per-domain functions (components never call `fetch` directly) · `context/` = shared state · `hooks/` = reusable behavior.
+5. **Layering.** `components/` = generic, presentation-only · `features/` = domain composition · `api/` = the single HTTP client wrapper (Axios) plus per-domain method objects, each returning the response body (components never call the client directly) · `context/` = shared state · `hooks/` = reusable behavior.
 
 ## Workflow
 

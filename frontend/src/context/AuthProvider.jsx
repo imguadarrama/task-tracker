@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./AuthContext.js";
 import { tokenStore } from "../api/client.js";
-import * as authApi from "../api/authApi.js";
+import { authApi } from "../api/authApi.js";
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
@@ -17,10 +17,10 @@ export function AuthProvider({ children }) {
     let active = true;
     authApi
       .getMe(stored)
-      .then((me) => {
+      .then((account) => {
         if (!active) return;
         setToken(stored);
-        setUser(me);
+        setUser(account);
         setStatus("authenticated");
       })
       .catch(() => {
@@ -34,11 +34,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (username, password) => {
-    const { token: issued } = await authApi.login(username, password);
-    const me = await authApi.getMe(issued);
-    tokenStore.set(issued);
-    setToken(issued);
-    setUser(me);
+    const session = await authApi.login(username, password);
+    const account = await authApi.getMe(session.token);
+    tokenStore.set(session.token);
+    setToken(session.token);
+    setUser(account);
     setStatus("authenticated");
   }, []);
 

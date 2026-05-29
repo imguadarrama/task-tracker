@@ -1,15 +1,7 @@
-// Base design tokens — the single source of truth for the app's palette and
-// type scale. Every .module.scss does `@use '.../variables' as *` and reads
-// from here; editing one value cascades to the whole app at build time.
-//
-// Exactly three colors and three font sizes. Borders, dividers, and hover
-// states are derived from these with `rgba($color-text, …)` rather than
-// introducing a fourth color.
+$color-surface: #ffffff;
+$color-text: #111111;
+$color-primary: #047857;
 
-$color-surface: #ffffff; // page + card background, text on the accent
-$color-text: #111111; // body text, headings; basis for borders/dividers
-$color-primary: #047857; // accent: primary actions, focus ring, links
-
-$font-size-sm: 0.875rem; // helper text, errors, secondary labels
-$font-size-md: 1rem; // body, inputs, buttons
-$font-size-lg: 1.5rem; // headings
+$font-size-sm: 0.875rem;
+$font-size-md: 1rem;
+$font-size-lg: 1.5rem;
