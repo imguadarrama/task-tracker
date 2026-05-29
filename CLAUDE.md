@@ -27,6 +27,7 @@ All changes ship via pull requests — never direct pushes to `master`.
 - `master` always reflects working, reviewable state. A broken `master` blocks every other PR.
 - After merge, delete the branch (locally and on the remote). Stale branches accumulate ambiguity about what's live.
 - Phases 0 and 1 were committed directly to `master` before this rule existed; everything from this commit forward uses the PR flow.
+- When a PR delivers a phase from `docs/build-plan.md`, tick that phase's checkboxes in the same PR. `master`'s build plan should always reflect what's actually shipped.
 
 ## Authoritative context
 

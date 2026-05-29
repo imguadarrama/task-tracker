@@ -152,9 +152,9 @@ Endpoints:
 - `POST /login` → verify password, return `{ token }`. Wrong creds → **401**.
 - Middleware `auth(req, res, next)` → read `Authorization: Bearer <token>`, `jwt.verify`, attach `req.userId`, else **401**. Every task route uses it.
 
-- [ ] Register hashes the password — **plaintext is never stored**
-- [ ] Login returns a token; bad credentials return 401
-- [ ] `auth` middleware rejects missing/invalid tokens with 401
+- [x] Register hashes the password — **plaintext is never stored**
+- [x] Login returns a token; bad credentials return 401
+- [x] `auth` middleware rejects missing/invalid tokens with 401
 
 **Understand:**
 - **Hashing vs encryption:** bcrypt is one-way and salted; you verify a password but can never recover it. That's what "securely hashed" requires.
