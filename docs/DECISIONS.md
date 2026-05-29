@@ -107,3 +107,36 @@ db.pragma("journal_mode = WAL");
 - Indices port unchanged.
 
 **Tradeoff.** Slightly more schema to defend in a follow-up call — but the rationale above is precisely what the reviewer would want to hear, so the schema is itself the answer.
+
+---
+
+## D9 — Task ownership responses (403 vs 404) and partial-update `PUT`
+
+**Decision.** On the task routes, a request for a task that exists but belongs to another user
+returns **403 Forbidden**; a request for a task id that doesn't exist returns **404 Not Found**;
+a malformed (non-numeric) id returns **400**. `PUT /tasks/:id` uses **partial-update** semantics —
+only the fields present in the body change, omitted fields keep their current values.
+
+**Why the 403/404 split.** Distinguishing the two makes the API honest about what happened and is
+the behavior the build plan calls for. Ownership is enforced **server-side** in one place
+(`loadOwnedTask`) shared by `PUT` and `DELETE`: load the row, 404 if absent, 403 if
+`owner_id !== req.userId`, only then mutate. Hiding controls in the frontend is not security — the
+403 path is what actually protects another user's data.
+
+**Why partial updates.** The frontend's common action is "change just the status" (build-plan
+Phase 6). Partial semantics let the client send `{ "status": "done" }` without re-sending the whole
+task, which avoids accidentally blanking `title`/`description` on a round-trip. Each provided field
+is still validated; an empty body is a `400`. `updated_at` is maintained by the DB trigger, so it
+stays correct no matter which subset of fields changed.
+
+**Tradeoffs.**
+- The 403 vs 404 split leaks the *existence* of another user's task id. For an app where ids aren't
+  sensitive this is the more honest choice; an app that must not reveal existence would return 404
+  for both the "missing" and "not yours" cases. Noted here so the choice is deliberate, not accidental.
+- Partial updates under the `PUT` verb are technically more `PATCH`-like. Kept as `PUT` to match the
+  build plan and spec while taking the more practical semantics.
+
+**Manual API testing.** The task endpoints are exercised by hand with **Postman** — the full
+register → login → create → list/filter → cross-user 403/404 → update → delete flow, asserting on
+status codes and response bodies. This is the manual counterpart to the automated `node:test` +
+`supertest` coverage added in Phase 4.
