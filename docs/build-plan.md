@@ -11,7 +11,7 @@ A step-by-step plan to deliver a working full-stack task-tracking app within the
 - **DB:** SQLite, accessed with raw `better-sqlite3` + a single `schema.sql` file. No ORM — you see exactly what every query does (matches the "understand the implications" goal in the brief). `db.js` opens the file, sets pragmas, and auto-applies `schema.sql` on startup — there is no migration command for the reviewer to run.
 - **Backend:** Node + Express. Auth with `bcryptjs` (no native build step) + `jsonwebtoken`.
 - **Frontend:** React + Vite, plain `fetch`, no extra state libraries.
-- **Test:** Node's built-in test runner (`node:test`) + `supertest` — avoids Jest config overhead.
+- **Test:** Vitest + `supertest` — a modern, fast Jest alternative with watch mode and built-in TS support. See [`DECISIONS.md` D10](DECISIONS.md).
 
 > **Why not Postgres / Prisma / Supabase?** See `DECISIONS.md` D1 and D2 for the full comparison.
 
@@ -45,14 +45,14 @@ mkdir tasktracker && cd tasktracker
 # Backend
 mkdir backend && cd backend && npm init -y
 npm install express better-sqlite3 bcryptjs jsonwebtoken cors dotenv
-npm install --save-dev supertest
+npm install --save-dev vitest supertest
 cd ..
 # Frontend
 npm create vite@latest frontend -- --template react
 cd frontend && npm install && cd ..
 ```
 
-- [ ] Backend `package.json` has `"type": "module"` and scripts: `"dev": "node --watch server.js"`, `"test": "node --test"`
+- [ ] Backend `package.json` has `"type": "module"` and scripts: `"dev": "node --watch server.js"`, `"test": "vitest run"`, `"test:watch": "vitest"`
 - [ ] Frontend scaffolded; `npm run dev` opens the Vite page
 - [ ] `backend/.env.example` (committed) and `backend/.env` (gitignored) with `JWT_SECRET=<random hex>`, `PORT=3000`, `DATABASE_FILE=./data/app.db`
 - [ ] Generate a real `JWT_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
@@ -194,20 +194,27 @@ Status codes to use deliberately: `201` create, `200` read/update, `204` delete,
 
 ## Phase 4 — One automated test (10 min)
 
-Create `backend/server.test.js` with `node:test` + `supertest` (export your Express `app` from `server.js` so the test can import it without binding a port).
+Create `backend/app.test.js` with **Vitest** (`describe`/`it`/`expect`) + `supertest`. The Express
+`app` is already exported from `app.js` (`server.js` owns `app.listen`), so the test drives it
+in-process without binding a port. Tool rationale is in [`DECISIONS.md` D10](DECISIONS.md).
 
-For isolation: point the test at a throwaway SQLite file by setting `process.env.DATABASE_FILE` **before** importing `db.js`, or use `':memory:'` for a fully in-process DB that vanishes on test exit.
+For isolation: a `backend/vitest.config.js` registers `test/setup.js`, which sets
+`process.env.DATABASE_FILE = ':memory:'` (and a test `JWT_SECRET`) **before** any test module's
+imports evaluate — winning the ESM hoist race so `db.js` opens a fully in-process DB. `db.js`
+short-circuits `':memory:'` to reach `better-sqlite3` verbatim (instead of resolving it to a path),
+so the DB vanishes on exit and leaves no `-wal`/`-shm` files to clean up.
 
 Cover the critical path:
-1. Register user A → login → create a task → `GET /tasks` returns it.
-2. (Bonus if time) Register user B → B's `GET /tasks` does **not** include A's task, and B gets 403/404 editing it.
+1. Register user A → login → `/me` → create a task → `GET /tasks` returns it.
+2. Ownership: register user B → B's `GET /tasks` does **not** include A's task, and B gets **403** on
+   `PUT`/`DELETE` of it.
 
-Run: `npm test` (which runs `node --test`).
+Run: `npm test` (which runs `vitest run`); `npm run test:watch` for watch mode.
 
-- [ ] `npm test` passes
-- [ ] Test asserts on **status codes and body**, not just "no crash"
+- [x] `npm test` passes
+- [x] Test asserts on **status codes and body**, not just "no crash"
 
-**Understand:** the ownership-isolation test proves the spec's hardest requirement. If you write only one assertion, make it that one. SQLite makes isolation cheap — a fresh file (or `:memory:`) means no leftover rows between runs, and the schema is re-applied automatically by `db.js` on first import.
+**Understand:** the ownership-isolation test proves the spec's hardest requirement. If you write only one assertion, make it that one. SQLite makes isolation cheap — a fresh `:memory:` DB means no leftover rows between runs, and the schema is re-applied automatically by `db.js` on first import.
 
 ---
 

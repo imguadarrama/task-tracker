@@ -11,7 +11,7 @@ A minimal task-tracking app: register, log in, create/edit/delete tasks, filter 
 - **Backend:** Node.js (≥ 20) + Express, raw SQL via `better-sqlite3`, auth via `bcryptjs` + `jsonwebtoken`.
 - **Frontend:** React (Vite), plain `fetch` for API calls, `localStorage` for the JWT.
 - **Database:** SQLite — single file, no server to install. See `docs/DECISIONS.md` for why this was chosen over Postgres for the take-home.
-- **Tests:** Node's built-in `node:test` runner + `supertest`.
+- **Tests:** Vitest + `supertest` (run in-process against the exported Express app). See `docs/DECISIONS.md` D10.
 
 ---
 
@@ -41,8 +41,13 @@ npm run dev                   # starts Vite on http://localhost:5173
 
 ```bash
 cd backend
-npm test
+npm test            # vitest run — single pass
+npm run test:watch  # vitest watch mode
 ```
+
+The suite drives the Express app in-process with `supertest` against a throwaway in-memory SQLite DB,
+covering the critical path (register → login → `/me` → create → list) and server-side ownership (a
+second user can't see or modify another user's task — 403). No `.env` or running server needed.
 
 ---
 

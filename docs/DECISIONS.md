@@ -138,5 +138,41 @@ stays correct no matter which subset of fields changed.
 
 **Manual API testing.** The task endpoints are exercised by hand with **Postman** — the full
 register → login → create → list/filter → cross-user 403/404 → update → delete flow, asserting on
-status codes and response bodies. This is the manual counterpart to the automated `node:test` +
-`supertest` coverage added in Phase 4.
+status codes and response bodies. This is the manual counterpart to the automated **Vitest +
+`supertest`** coverage added in Phase 4 (see D10).
+
+---
+
+## D10 — Vitest over `node:test` (and over Jest) for the test runner
+
+**Decision.** Run the automated test suite with **Vitest**, keeping `supertest` as the HTTP layer.
+The earlier plan named Node's built-in `node:test`.
+
+**Why.** Two reasons. First, Vitest is a deliberate talking point — it came up in the interview, so
+the suite demonstrates it directly. Second, it's the better day-to-day tool: a rich `expect` API
+(`toMatchObject`, `expect.any`, etc.), instant watch mode (`npm run test:watch`), helpful diffs on
+failure, and built-in TypeScript support — a no-friction upgrade path if this codebase ever adopts
+TS. The suite (`backend/app.test.js`) drives the exported Express `app` in-process via `supertest`,
+covering the critical path (register → login → `/me` → create → list) and the spec's hardest
+requirement — server-side ownership (a second user gets `403` on another user's task and never sees
+it listed).
+
+**Test isolation.** Tests point `DATABASE_FILE` at `:memory:` (set in `test/setup.js`, which Vitest
+loads before any test module's imports evaluate — winning the ESM hoist race; `dotenv` won't override
+an already-set var). `db.js` gained a short-circuit so `":memory:"` reaches `better-sqlite3` verbatim
+instead of being resolved to a path. The result: a fresh in-memory DB per run, no fixture files, and
+— importantly on Windows — no `-wal`/`-shm` files to leave locked or clean up.
+
+**Tradeoffs.**
+- Vitest adds one devDependency and a small `vitest.config.js`, where `node:test` is zero-dependency
+  and config-free. The ergonomics and the interview relevance justify the cost; the config stays
+  minimal (default `node` environment and `forks` pool — both correct for the native `better-sqlite3`
+  module, so no overrides).
+- A single in-memory DB is shared across the test file's lifetime, so usernames must be unique within
+  the file (`UNIQUE COLLATE NOCASE` → `409` otherwise). A trivial constraint at this size.
+
+**Rejected alternatives.**
+- *`node:test`* — zero-dependency, but no watch mode or `expect`-style assertions/diffs, and a weaker
+  thing to show given the interview context.
+- *Jest* — heavier setup, slower, and its transform pipeline adds friction with native ESM and the
+  native `better-sqlite3` addon. Vitest delivers the same DX without that overhead.
