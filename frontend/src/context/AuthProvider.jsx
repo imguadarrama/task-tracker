@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AuthContext } from './AuthContext.js';
-import { tokenStore } from '../api/client.js';
-import * as authApi from '../api/authApi.js';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AuthContext } from "./AuthContext.js";
+import { tokenStore } from "../api/client.js";
+import * as authApi from "../api/authApi.js";
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState(() =>
-    tokenStore.get() ? 'loading' : 'anonymous',
+    tokenStore.get() ? "loading" : "anonymous",
   );
 
   useEffect(() => {
@@ -21,12 +21,12 @@ export function AuthProvider({ children }) {
         if (!active) return;
         setToken(stored);
         setUser(me);
-        setStatus('authenticated');
+        setStatus("authenticated");
       })
       .catch(() => {
         if (!active) return;
         tokenStore.clear();
-        setStatus('anonymous');
+        setStatus("anonymous");
       });
     return () => {
       active = false;
@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
     tokenStore.set(issued);
     setToken(issued);
     setUser(me);
-    setStatus('authenticated');
+    setStatus("authenticated");
   }, []);
 
   const register = useCallback(
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
     tokenStore.clear();
     setToken(null);
     setUser(null);
-    setStatus('anonymous');
+    setStatus("anonymous");
   }, []);
 
   const value = useMemo(
