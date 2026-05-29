@@ -1,0 +1,22 @@
+@use '../../styles/variables' as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.state {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.empty {
+  margin: 0;
+  font-size: $font-size-md;
+  color: rgba($color-text, 0.6);
+}
