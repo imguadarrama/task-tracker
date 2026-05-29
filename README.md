@@ -2,7 +2,7 @@
 
 A minimal task-tracking app: register, log in, create/edit/delete tasks, filter by status, search by keyword. Built as a take-home exercise — focus is correctness and clarity, not UI polish.
 
-**Status:** In progress. This README is updated as the project evolves through its build phases. See `build-plan.md` for the phase-by-phase plan and `DECISIONS.md` for the running log of design choices.
+**Status:** In progress. This README is updated as the project evolves through its build phases. See `docs/build-plan.md` for the phase-by-phase plan and `docs/DECISIONS.md` for the running log of design choices.
 
 ---
 
@@ -10,7 +10,7 @@ A minimal task-tracking app: register, log in, create/edit/delete tasks, filter 
 
 - **Backend:** Node.js (≥ 20) + Express, raw SQL via `better-sqlite3`, auth via `bcryptjs` + `jsonwebtoken`.
 - **Frontend:** React (Vite), plain `fetch` for API calls, `localStorage` for the JWT.
-- **Database:** SQLite — single file, no server to install. See `DECISIONS.md` for why this was chosen over Postgres for the take-home.
+- **Database:** SQLite — single file, no server to install. See `docs/DECISIONS.md` for why this was chosen over Postgres for the take-home.
 - **Tests:** Node's built-in `node:test` runner + `supertest`.
 
 ---
@@ -58,16 +58,19 @@ npm test
 │   ├── .env.example       # template — copy to .env
 │   └── package.json
 ├── frontend/              # Vite + React app
-├── DECISIONS.md           # running log of design decisions and tradeoffs
-├── build-plan.md          # phase-by-phase build plan
-└── specifications.md      # original assignment brief
+├── docs/
+│   ├── DECISIONS.md       # running log of design decisions and tradeoffs
+│   ├── build-plan.md      # phase-by-phase build plan
+│   └── specifications.md  # original assignment brief
+├── CLAUDE.md              # operating rules for code in this repo
+└── README.md              # this file
 ```
 
 ---
 
 ## Design decisions & tradeoffs
 
-The short version is in this section. The full reasoning behind every non-obvious choice is in **`DECISIONS.md`**, which is updated as decisions are made (not reconstructed at the end).
+The short version is in this section. The full reasoning behind every non-obvious choice is in **`docs/DECISIONS.md`**, which is updated as decisions are made (not reconstructed at the end).
 
 Highlights:
 
@@ -91,4 +94,4 @@ Highlights:
 
 ## Tools used
 
-This project was built with AI-assisted pair programming (Claude). Every design decision, tradeoff, and line of code was reviewed and is owned by the author — see `DECISIONS.md` for the reasoning behind each choice.
+This project was built with AI-assisted pair programming (Claude). Every design decision, tradeoff, and line of code was reviewed and is owned by the author — see `docs/DECISIONS.md` for the reasoning behind each choice.
