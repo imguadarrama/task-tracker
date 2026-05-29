@@ -64,11 +64,18 @@ A running log of the non-obvious choices made while building this app, with the 
 
 ---
 
-## D6 — `PRAGMA foreign_keys = ON` on every connection
+## D6 — SQLite pragmas set on every connection (`foreign_keys`, `journal_mode = WAL`)
 
-**Decision.** Immediately after opening the SQLite connection in `db.js`, run `db.pragma('foreign_keys = ON')`.
+**Decision.** Immediately after opening the SQLite connection in `db.js`, run two pragmas:
 
-**Why.** SQLite ships with foreign key enforcement **off by default** for backward compatibility — a notorious foot-gun. Without this pragma, `tasks.owner_id REFERENCES users(id) ON DELETE CASCADE` is silently ignored, and orphan rows become possible. Setting it explicitly is non-negotiable.
+```js
+db.pragma("foreign_keys = ON");
+db.pragma("journal_mode = WAL");
+```
+
+**Why `foreign_keys = ON`.** SQLite ships with foreign key enforcement **off by default** for backward compatibility — a notorious foot-gun. Without this pragma, `tasks.owner_id REFERENCES users(id) ON DELETE CASCADE` is silently ignored, and orphan rows become possible. Setting it explicitly is non-negotiable: it is the only thing that makes the FK declaration in `schema.sql` actually behave.
+
+**Why `journal_mode = WAL`.** The default rollback-journal mode blocks readers while a writer is active. Write-Ahead Logging lets reads continue concurrently with a single writer, which matches how the API will hit the DB (many GETs from the frontend while occasional POST/PUT/DELETE land). WAL persists at the database-file level — once set, the mode survives connection close, so this pragma is idempotent on every startup. Migrates to Postgres as a no-op (Postgres uses WAL by default; the configuration moves from connection-time pragma to server config).
 
 ---
 
@@ -77,3 +84,26 @@ A running log of the non-obvious choices made while building this app, with the 
 **Decision.** Disclose AI assistance (Claude) as a tool used during development, in the README's "Tools used" section. Every design decision and every line of code was reviewed and is owned by the author — this `DECISIONS.md` exists in large part so each choice is independently defensible.
 
 **Why.** The brief doesn't forbid AI assistance and tech-industry norms in 2026 assume it's in use unless explicitly banned. Hiding it would be the higher-risk option for the inevitable follow-up technical conversation, where the value comes from being able to defend choices — which is exactly what this document supports.
+
+---
+
+## D8 — Schema choices beyond the spec (full-system schema)
+
+**Decision.** `backend/schema.sql` goes beyond the strict spec by adding `created_at` / `updated_at` timestamps, indices on `tasks(owner_id)` and `tasks(owner_id, status)`, `COLLATE NOCASE` on `users.username`, and an `AFTER UPDATE` trigger that maintains `updated_at`.
+
+**Why.** The spec lists the minimum (`title`, `description`, `status`, `owner`) but every real task tracker has audit timestamps and indexed access paths. `CLAUDE.md` Rule 4 ("implement FULL systems, not patches") and Rule 2 ("build scalably") together push us past the minimum:
+
+- **`COLLATE NOCASE` on `username`** — prevents "Alice" and "alice" from being two distinct accounts. Standard auth hygiene; the cost is zero.
+- **`created_at`, `updated_at`** — answer the "when did this happen?" question without a schema migration later. Stored as ISO-8601 text via `datetime('now')`, which is the SQLite-idiomatic choice (no native timestamp type).
+- **`AFTER UPDATE` trigger on `tasks`** — keeps `updated_at` correct regardless of which route or query touches the row. Per Rule 4, if we expose the column we must guarantee it stays accurate; doing it in application code would be a discipline tax that Rule 1 (DRY) and Rule 5 (best practices) flag as the wrong place for this concern.
+- **`idx_tasks_owner` and `idx_tasks_owner_status`** — every list query in Phase 3 will filter by `owner_id`, and most by `status` too. Adding the indices at table-creation time is the "scalable" choice (Rule 2) and costs ~nothing on a small DB.
+
+**Postgres migration notes.** Everything ports near-1:1:
+- `INTEGER PRIMARY KEY` → `SERIAL` (or `GENERATED ALWAYS AS IDENTITY`).
+- `TEXT COLLATE NOCASE` → `CITEXT` (extension) or `LOWER(username)` with a functional unique index.
+- `datetime('now')` → `NOW()`, column type `TIMESTAMPTZ`.
+- `CHECK (status IN ('todo','doing','done'))` → identical, or convert to an `ENUM` type.
+- `AFTER UPDATE` trigger → `BEFORE UPDATE` trigger setting `NEW.updated_at = NOW()` (cheaper than the AFTER-with-recursive-UPDATE pattern SQLite needs).
+- Indices port unchanged.
+
+**Tradeoff.** Slightly more schema to defend in a follow-up call — but the rationale above is precisely what the reviewer would want to hear, so the schema is itself the answer.
