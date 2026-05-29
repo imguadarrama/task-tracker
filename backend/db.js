@@ -5,9 +5,14 @@ import Database from "better-sqlite3";
 import "dotenv/config";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dbFile = resolve(here, process.env.DATABASE_FILE ?? "./data/app.db");
+const configured = process.env.DATABASE_FILE ?? "./data/app.db";
 
-mkdirSync(dirname(dbFile), { recursive: true });
+// ":memory:" => a true in-memory DB (used by the test suite): it must reach
+// better-sqlite3 verbatim, so skip path resolution and directory creation.
+const dbFile = configured === ":memory:" ? ":memory:" : resolve(here, configured);
+if (dbFile !== ":memory:") {
+  mkdirSync(dirname(dbFile), { recursive: true });
+}
 
 export const db = new Database(dbFile);
 db.pragma("foreign_keys = ON");
